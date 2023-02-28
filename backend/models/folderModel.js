@@ -6,16 +6,12 @@ const folderSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    parent: {
+    parentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Folder',
+      default: null,
+      required: true,
     },
-    children: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Folder',
-      },
-    ],
   },
   {
     timestamps: true,
