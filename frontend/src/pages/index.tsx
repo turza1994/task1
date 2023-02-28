@@ -1,5 +1,4 @@
 import Head from 'next/head'
-import FolderList from '@/components/FolderList/FolderList'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 
@@ -14,7 +13,7 @@ export default function Home() {
 
   useEffect(() => {
     axios
-      .get<Folder[]>('http://localhost:5000/api/folders')
+      .get<Folder[]>('https://folder-structure.onrender.com/api/folders')
       .then((response) => {
         setFolders(response.data)
       })
@@ -27,7 +26,10 @@ export default function Home() {
     const name = window.prompt('Enter folder name')
     if (name !== null && name !== '') {
       axios
-        .post<Folder>('http://localhost:5000/api/folders', { name, parentId })
+        .post<Folder>('https://folder-structure.onrender.com/api/folders', {
+          name,
+          parentId,
+        })
         .then((response) => {
           setFolders((prevFolders) => [...prevFolders, response.data])
         })
@@ -40,7 +42,7 @@ export default function Home() {
   const handleDeleteFolder = (id: string): void => {
     if (window.confirm('Are you sure you want to delete this folder?')) {
       axios
-        .delete(`http://localhost:5000/api/folders/${id}`)
+        .delete(`https://folder-structure.onrender.com/api/folders/${id}`)
         .then(() => {
           setFolders((prevFolders) =>
             prevFolders.filter((folder) => folder._id !== id)
