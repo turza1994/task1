@@ -1,26 +1,85 @@
 import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from '@next/font/google'
-import styles from '@/styles/Home.module.css'
 import FolderList from '@/components/FolderList/FolderList'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 
-const inter = Inter({ subsets: ['latin'] })
+interface Folder {
+  _id: string
+  name: string
+  parentId: string | null
+}
 
 export default function Home() {
-  const [rootFolder, setRootFolder] = useState<any>({})
+  const [folders, setFolders] = useState<Folder[]>([])
 
   useEffect(() => {
     axios
-      .get(`http://localhost:5000/api/folders`)
+      .get<Folder[]>('http://localhost:5000/api/folders')
       .then((response) => {
-        setRootFolder(response.data[0])
+        setFolders(response.data)
       })
       .catch((error) => {
         console.error(error)
       })
   }, [])
+
+  const handleCreateFolder = (parentId: string | null): void => {
+    const name = window.prompt('Enter folder name')
+    if (name !== null && name !== '') {
+      axios
+        .post<Folder>('http://localhost:5000/api/folders', { name, parentId })
+        .then((response) => {
+          setFolders((prevFolders) => [...prevFolders, response.data])
+        })
+        .catch((error) => {
+          console.error(error)
+        })
+    }
+  }
+
+  const handleDeleteFolder = (id: string): void => {
+    if (window.confirm('Are you sure you want to delete this folder?')) {
+      axios
+        .delete(`http://localhost:5000/api/folders/${id}`)
+        .then(() => {
+          setFolders((prevFolders) =>
+            prevFolders.filter((folder) => folder._id !== id)
+          )
+        })
+        .catch((error) => {
+          console.error(error)
+        })
+    }
+  }
+
+  const renderFolder = (folder: Folder): JSX.Element => {
+    const childFolders = folders.filter(
+      (child) => child.parentId === folder._id
+    )
+
+    return (
+      <div key={folder._id} className='p-4 bg-gray-100 rounded-md'>
+        <div className='flex justify-between items-center'>
+          <h3 className='text-lg font-bold'>{folder.name}</h3>
+          <div className='flex items-center mb-2 gap-3'>
+            <button
+              className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'
+              onClick={() => handleCreateFolder(folder._id)}
+            >
+              New folder
+            </button>
+            <button
+              className='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded'
+              onClick={() => handleDeleteFolder(folder._id)}
+            >
+              Delete folder
+            </button>
+          </div>
+        </div>
+        {childFolders.map((child) => renderFolder(child))}
+      </div>
+    )
+  }
 
   return (
     <>
@@ -30,8 +89,11 @@ export default function Home() {
         <meta name='viewport' content='width=device-width, initial-scale=1' />
         <link rel='icon' href='/favicon.ico' />
       </Head>
-      <main className='min-h-[100vh] flex justify-center text-3xl'>
-        <FolderList folder={rootFolder} />
+      <main className='p-4'>
+        <h1 className='text-3xl font-bold mb-4'>Folder Structure App</h1>
+        {folders
+          .filter((folder) => folder.parentId === null)
+          .map((root) => renderFolder(root))}
       </main>
     </>
   )
